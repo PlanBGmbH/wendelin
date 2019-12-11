@@ -1,0 +1,36 @@
+# Build Number
+name: $(Date:yyyyMMdd)$(Rev:.r)
+# -------------------------------------------------------------------------------
+
+trigger:
+- master
+- refs/tags/*
+
+steps:
+- task: DotNetCoreInstaller@0
+  inputs:
+    packageType: 'sdk'
+    version: '2.2.104' 
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet build'
+  inputs:
+    projects: '**/*.sln'
+- task: VSTest@2
+  displayName: 'Test assemblies'
+  inputs:
+    diagnosticsEnabled: True
+- task: NuGetToolInstaller@0
+  displayName: 'Use NuGet 4.9.4'
+  inputs:
+    versionSpec: 4.9.4
+- task: NuGetCommand@2
+  displayName: 'NuGet push'
+  inputs:
+    command: push
+    packagesToPush: '$(System.DefaultWorkingDirectory)/**/*.nupkg;!$(System.DefaultWorkingDirectory)/**/*.symbols.nupkg'
+    publishVstsFeed: '7e1bdab1-f746-470a-99be-61eb965da1ee'
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact'
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)'
+  condition: succeededOrFailed()
